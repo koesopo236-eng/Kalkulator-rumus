@@ -1,0 +1,7 @@
+{
+  "name": "kalkulator-rumus",
+  "version": "1.0.0",
+  "description": "Kalkulator berisi rumus-rumus siap pakai. Open source.",
+  "license": "MIT",
+  "private": true
+}

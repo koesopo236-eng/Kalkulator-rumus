@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator Rumus</title>
+<style>
+  :root { --bg:#fafaf7; --card:#fff; --text:#1c1c1a; --muted:#6b6b66; --accent:#2f6fed; --border:#e3e3dd; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#161616; --card:#212121; --text:#f0f0ec; --muted:#9a9a94; --accent:#6c9bff; --border:#333; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+  header { padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+  header h1 { font-size:18px; margin:0; }
+  #back { display:none; background:none; border:0; color:var(--accent); font-size:22px; padding:0 8px 0 0; }
+  main { padding:16px; max-width:520px; margin:0 auto; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:20px 0 8px; }
+  .item { display:block; width:100%; text-align:left; background:var(--card); color:var(--text);
+          border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:8px; font-size:16px; }
+  .item small { display:block; color:var(--muted); margin-top:2px; }
+  label { display:block; margin:12px 0 4px; font-size:14px; color:var(--muted); }
+  input { width:100%; padding:12px; font-size:18px; border-radius:10px; border:1px solid var(--border);
+          background:var(--card); color:var(--text); }
+  button.go { width:100%; margin-top:16px; padding:14px; font-size:17px; border:0; border-radius:12px;
+              background:var(--accent); color:#fff; }
+  #hasil { margin-top:16px; padding:16px; border-radius:12px; background:var(--card);
+           border:1px solid var(--border); font-size:20px; white-space:pre-line; display:none; }
+  .rumus { color:var(--muted); font-size:15px; }
+</style>
+</head>
+<body>
+<header><button id="back" aria-label="Kembali">←</button><h1 id="judul">Kalkulator Rumus</h1></header>
+<main id="app"></main>
+
+<script>
+const fmt = n => Number.isFinite(n) ? Number(n.toPrecision(10)).toLocaleString('id-ID', {maximumFractionDigits: 8}) : 'Tidak terdefinisi';
+
+// Tambah rumus baru cukup dengan menambah objek di sini.
+const KATEGORI = {
+  "Geometri": [
+    { nama:"Luas lingkaran", rumus:"π × r²", input:[["r","Jari-jari (r)"]], hitung:v=>"Luas = "+fmt(Math.PI*v.r**2) },
+    { nama:"Keliling lingkaran", rumus:"2 × π × r", input:[["r","Jari-jari (r)"]], hitung:v=>"Keliling = "+fmt(2*Math.PI*v.r) },
+    { nama:"Luas persegi panjang", rumus:"p × l", input:[["p","Panjang (p)"],["l","Lebar (l)"]], hitung:v=>"Luas = "+fmt(v.p*v.l) },
+    { nama:"Luas segitiga", rumus:"½ × a × t", input:[["a","Alas (a)"],["t","Tinggi (t)"]], hitung:v=>"Luas = "+fmt(0.5*v.a*v.t) },
+    { nama:"Volume tabung", rumus:"π × r² × t", input:[["r","Jari-jari (r)"],["t","Tinggi (t)"]], hitung:v=>"Volume = "+fmt(Math.PI*v.r**2*v.t) },
+    { nama:"Volume bola", rumus:"4/3 × π × r³", input:[["r","Jari-jari (r)"]], hitung:v=>"Volume = "+fmt(4/3*Math.PI*v.r**3) },
+    { nama:"Teorema Pythagoras", rumus:"c = √(a² + b²)", input:[["a","Sisi a"],["b","Sisi b"]], hitung:v=>"Sisi miring (c) = "+fmt(Math.hypot(v.a,v.b)) },
+  ],
+  "Fisika": [
+    { nama:"Kecepatan", rumus:"v = s / t", input:[["s","Jarak (s)"],["t","Waktu (t)"]], hitung:v=>"v = "+fmt(v.s/v.t) },
+    { nama:"Gaya (Hukum Newton II)", rumus:"F = m × a", input:[["m","Massa (m)"],["a","Percepatan (a)"]], hitung:v=>"F = "+fmt(v.m*v.a) },
+    { nama:"Energi kinetik", rumus:"Ek = ½ × m × v²", input:[["m","Massa (m)"],["v","Kecepatan (v)"]], hitung:v=>"Ek = "+fmt(0.5*v.m*v.v**2) },
+    { nama:"Hukum Ohm", rumus:"V = I × R", input:[["i","Arus (I)"],["r","Hambatan (R)"]], hitung:v=>"V = "+fmt(v.i*v.r) },
+    { nama:"Massa jenis", rumus:"ρ = m / V", input:[["m","Massa (m)"],["vol","Volume (V)"]], hitung:v=>"ρ = "+fmt(v.m/v.vol) },
+  ],
+  "Keuangan": [
+    { nama:"Bunga sederhana", rumus:"I = P × r × t", input:[["p","Pokok (P)"],["r","Bunga per tahun (%)"],["t","Lama (tahun)"]],
+      hitung:v=>{const b=v.p*v.r/100*v.t; return "Bunga = "+fmt(b)+"\nTotal = "+fmt(v.p+b);} },
+    { nama:"Bunga majemuk", rumus:"A = P × (1 + r/n)^(n×t)", input:[["p","Pokok (P)"],["r","Bunga per tahun (%)"],["n","Kali majemuk per tahun (n)"],["t","Lama (tahun)"]],
+      hitung:v=>{const a=v.p*(1+v.r/100/v.n)**(v.n*v.t); return "Total = "+fmt(a)+"\nBunga = "+fmt(a-v.p);} },
+    { nama:"Persentase", rumus:"hasil = (persen / 100) × nilai", input:[["pc","Persen (%)"],["n","Nilai"]], hitung:v=>"Hasil = "+fmt(v.pc/100*v.n) },
+  ],
+  "Aljabar": [
+    { nama:"Persamaan kuadrat", rumus:"ax² + bx + c = 0", input:[["a","a"],["b","b"],["c","c"]],
+      hitung:v=>{
+        if (v.a===0) return "Nilai a tidak boleh 0";
+        const d=v.b**2-4*v.a*v.c;
+        if (d<0) return "Diskriminan = "+fmt(d)+"\nTidak ada akar real";
+        const x1=(-v.b+Math.sqrt(d))/(2*v.a), x2=(-v.b-Math.sqrt(d))/(2*v.a);
+        return "Diskriminan = "+fmt(d)+"\nx₁ = "+fmt(x1)+"\nx₂ = "+fmt(x2);
+      } },
+  ],
+};
+
+const app = document.getElementById('app');
+const judul = document.getElementById('judul');
+const back = document.getElementById('back');
+back.onclick = beranda;
+
+function beranda() {
+  judul.textContent = "Kalkulator Rumus"; back.style.display = "none";
+  app.innerHTML = "";
+  for (const [kat, daftar] of Object.entries(KATEGORI)) {
+    const h = document.createElement('h2'); h.textContent = kat; app.appendChild(h);
+    daftar.forEach(r => {
+      const b = document.createElement('button'); b.className = "item";
+      b.innerHTML = `${r.nama}<small>${r.rumus}</small>`;
+      b.onclick = () => buka(r); app.appendChild(b);
+    });
+  }
+}
+
+function buka(r) {
+  judul.textContent = r.nama; back.style.display = "block";
+  app.innerHTML = `<div class="rumus">${r.rumus}</div>` +
+    r.input.map(([id,lbl]) => `<label for="${id}">${lbl}</label><input id="${id}" type="number" inputmode="decimal" step="any">`).join("") +
+    `<button class="go">Hitung</button><div id="hasil"></div>`;
+  app.querySelector('.go').onclick = () => {
+    const v = {}; let kosong = false;
+    r.input.forEach(([id]) => { const x = document.getElementById(id).value; if (x==="") kosong = true; v[id] = parseFloat(x); });
+    const out = document.getElementById('hasil'); out.style.display = "block";
+    out.textContent = kosong ? "Isi semua kolom dulu" : r.hitung(v);
+  };
+}
+beranda();
+</script>
+</body>
+</html>
